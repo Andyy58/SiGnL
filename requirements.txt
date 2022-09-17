@@ -188,3 +188,8 @@ websocket-client==1.4.0
 Werkzeug==2.2.2
 wrapt==1.14.1
 zipp==3.8.1
+
+pyttsx3~=2.90
+sounddevice~=0.4.5
+pyglet~=1.5.26
+SoundFile~=0.10.3.post1
