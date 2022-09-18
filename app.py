@@ -37,6 +37,7 @@ cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
 bg_img = ImageTk.PhotoImage(Image.open('static/img/background.png').resize((window_width + 10, window_height + 10)))
 bg = canvas.create_image(window_width // 2, window_height // 2, image=bg_img)
+label = canvas.create_text(window_width // 2, window_height - 100, width=460, anchor='nw', text='', fill='black', font='Calibri 15')
 
 
 def close():
@@ -67,6 +68,11 @@ def set_voice(variable):
 
 def talk(text):
     outputs.speak(text)
+
+
+def print_output(text):
+    global label
+    label = canvas.create_text(window_width // 2 - 245, window_height - 95, width=460, anchor='nw', text=text, fill='black', font='Calibri 11')
 
 
 def open_settings():
@@ -109,6 +115,7 @@ def close_manual():
 def open_manual():
     global manual_window
     if manual_window is None:
+        print_output('I want to sleep')
         speak = Thread(target=talk, args=['Testing'])
         speak.start()
         manual_window = tk.Toplevel()
@@ -150,6 +157,7 @@ def show_frames():
     camera.frame = frame_img
     canvas.create_image(window_width // 2 - 15, window_height // 2 - 35, image=frame_img)
     canvas.tag_raise(bg)
+    canvas.tag_raise(label)
     camera.after(10, show_frames)
 
 
