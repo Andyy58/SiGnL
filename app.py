@@ -4,15 +4,16 @@ from PIL import ImageTk, Image
 from output import *
 import cv2
 from threading import Thread
+import pyvirtualcam
 
 window = tk.Tk()
 settings_window = None
 manual_window = None
-window.title('ASignL')
+window.title('SiGnL')
 
 outputs = Output()
 output_devices = Output.get_output_devices()
-
+sending = True
 
 window_width = 960
 window_height = 540
@@ -32,10 +33,19 @@ canvas = tk.Canvas(frame, bg='black', width=window_width, height=window_height, 
 canvas.pack()
 
 camera = tk.Label(window, borderwidth=0)
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
 
 bg_img = ImageTk.PhotoImage(Image.open('static/img/background.png').resize((window_width + 10, window_height + 10)))
 bg = canvas.create_image(window_width // 2, window_height // 2, image=bg_img)
+
+
+def close():
+    global window, sending
+    window.destroy()
+    sending = False
+
+
+window.protocol('WM_DELETE_WINDOW', close)
 
 
 def close_settings():
@@ -55,11 +65,15 @@ def set_voice(variable):
     outputs.set_gender(variable)
 
 
+def talk(text):
+    outputs.speak(text)
+
+
 def open_settings():
     global settings_window
     if settings_window is None:
         settings_window = tk.Toplevel()
-        settings_window.title('ASignL Settings')
+        settings_window.title('SiGnL Settings')
         settings_window['bg'] = '#0f4ebf'
         settings_window.geometry(f'260x180+50+50')
         settings_window.protocol('WM_DELETE_WINDOW', close_settings)
@@ -94,15 +108,15 @@ def close_manual():
 
 def open_manual():
     global manual_window
-    #outputs.speak('Hello World')
     if manual_window is None:
+        speak = Thread(target=talk, args=['Testing'])
+        speak.start()
         manual_window = tk.Toplevel()
-        manual_window.title('ASignL Manual')
+        manual_window.title('SiGnL Manual')
         manual_window.geometry(f'500x500+100+100')
         manual_window.protocol('WM_DELETE_WINDOW', close_manual)
 
         chart_img = ImageTk.PhotoImage(Image.open('static/img/manual.png').resize((500, 500)))
-        print(chart_img)
         chart_bg = tk.Label(manual_window, image=chart_img)
         chart_bg.pack()
 
@@ -119,6 +133,16 @@ manual.pack()
 canvas.create_window(window_width - 70, 20, anchor='ne', window=manual)
 
 
+def send_to_virtual_cam():
+    cam = pyvirtualcam.Camera(width=1280, height=720, fps=30)
+    while sending:
+        cv2_image = cv2.cvtColor(cap.read()[1], cv2.COLOR_BGR2RGB)
+        cam_frame = np.array(
+            Image.fromarray(cv2_image).resize((1280, 960)).crop((0, 120, 1280, 840)))
+        cam.send(cam_frame)
+        cam.sleep_until_next_frame()
+
+
 def show_frames():
     cv2_image = cv2.cvtColor(cap.read()[1], cv2.COLOR_BGR2RGB)
     frame_img = ImageTk.PhotoImage(
@@ -130,5 +154,7 @@ def show_frames():
 
 
 show_frames()
+virtual_cam = Thread(target=send_to_virtual_cam)
+virtual_cam.start()
 
 window.mainloop()
