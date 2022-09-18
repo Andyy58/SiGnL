@@ -1,12 +1,14 @@
 import pyttsx3 as tts
 import sounddevice as sd
 import soundfile as sf
+import numpy as np
 
 
 class Output:
     def __init__(self):
         self.engine = tts.init()
         self.voices = self.engine.getProperty('voices')
+        self.gender = 'Male'
         self.output_device = sd.default.device[1]
 
     @staticmethod
@@ -27,10 +29,12 @@ class Output:
         self.output_device = index
 
     def set_gender(self, gender):
-        if gender == 'M':
+        if gender.lower() == 'male':
             self.engine.setProperty('voice', self.voices[0].id)
+            self.gender = 'Male'
         else:
             self.engine.setProperty('voice', self.voices[1].id)
+            self.gender = 'Female'
 
     def speak(self, out):
         self.engine.save_to_file(out, 'static/output/output.mp3')
